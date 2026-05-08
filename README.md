@@ -74,12 +74,12 @@ Splits:
 
 ## 4 Performance
 
-| Strategy | Val PnL | Val % | Val Sharpe | Test PnL | Test % | Test Sharpe | Test fills | Test max inv | Test turnover |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|
-| §1.1 AS Static     | −4.45  | −0.445% | −94.8   | −27.22  | −2.722%  | −71.6   | 362,615 | 9,428 | 277,879 |
-| §1.2 AS Rolling    | −24.58 | −2.458% | −1832.1 | −157.68 | −15.768% | −1126.2 | 598,855 | 3,708 | 472,481 |
-| §1.3 AS Heuristic  | −7.35  | −0.735% | −586.9  | −49.99  | −4.999%  | −460.5  | 538,629 | 1,099 | 420,310 |
-| §2.1 Microprice    | −7.37  | −0.737% | −587.9  | −49.98  | −4.998%  | −455.7  | 538,657 | 1,099 | 420,319 |
-| §2.2 Microprice V2 | −7.58  | −0.758% | −1031.3 | −48.16  | −4.816%  | −777.2  | 519,137 |   599 | 402,490 |
+| Strategy | Val PnL | Test PnL | Test % | Test Sharpe | Test fills |
+|---|---:|---:|---:|---:|---:|
+| §1.1 AS Static     | −4.45  | −27.22  | −2.722%  | −71.6   | 362,615 |
+| §1.2 AS Rolling    | −24.58 | −157.68 | −15.768% | −1126.2 | 598,855 |
+| §1.3 AS Heuristic  | −7.35  | −49.99  | −4.999%  | −460.5  | 538,629 |
+| §2.1 Microprice    | −7.37  | −49.98  | −4.998%  | −455.7  | 538,657 |
+| §2.2 Microprice V2 | −7.58  | −48.16  | −4.816%  | −777.2  | 519,137 |
 
-PnL and turnover in USD. Sharpe annualized from per-observation returns.
+PnL in USD. Sharpe annualized. Capital = $1 000.
