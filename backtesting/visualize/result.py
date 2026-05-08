@@ -110,7 +110,8 @@ class BacktestResult:
         )
         return pd.DataFrame({"value": [v for _, _, v in rows]}, index=idx)
 
-    def plot(self, height: int = 1100, tick_size: float | None = None):
+    def plot(self, height: int = 1100, tick_size: float | None = None,
+             resample: str = "1min"):
         trade_fills = self.fills[self.fills["side"].isin(["bid", "ask"])]
 
         # --- PnL decomposition: spread capture vs inventory drift ---
@@ -139,20 +140,29 @@ class BacktestResult:
             spread_pnl = pd.Series(merged["val"].fillna(0.0).values, index=self.pnl.index)
             inv_drift  = self.pnl - spread_pnl
 
+        # --- Downsample PnL / inventory to target resolution ---
+        pnl_ds = self.pnl.resample(resample).last().dropna()
+        inv_ds = self.inventory.resample(resample).last().dropna()
+        if len(spread_pnl):
+            spread_pnl = spread_pnl.resample(resample).last().dropna()
+            inv_drift  = inv_drift.resample(resample).last().dropna()
+
         # --- Quote offsets from mid ---
         if len(self.quotes):
             divisor    = tick_size if tick_size else 1.0
             ylabel_off = "ticks" if tick_size else "price units"
-            bid_off = (self.quotes["bid"] - self.quotes["mid"]) / divisor
-            ask_off = (self.quotes["ask"] - self.quotes["mid"]) / divisor
+            qt_ds   = self.quotes.resample(resample).last().dropna()
+            bid_off = (qt_ds["bid"] - qt_ds["mid"]) / divisor
+            ask_off = (qt_ds["ask"] - qt_ds["mid"]) / divisor
         else:
             ylabel_off = ""
+            qt_ds = pd.DataFrame()
 
-        # --- Cumulative signed fill imbalance ---
+        # --- Cumulative signed fill imbalance (resampled to target resolution) ---
         cum_imbalance = pd.Series(dtype=float)
         if len(trade_fills) > 1:
             signed        = trade_fills["side"].map({"bid": 1.0, "ask": -1.0})
-            cum_imbalance = signed.cumsum()
+            cum_imbalance = signed.cumsum().resample(resample).last().dropna()
 
         fig = make_subplots(
             rows=4, cols=1, shared_xaxes=True,
@@ -166,20 +176,20 @@ class BacktestResult:
             ),
         )
 
-        if len(self.quotes):
+        if len(qt_ds):
             fig.add_trace(go.Scatter(
-                x=self.quotes.index, y=ask_off,
+                x=qt_ds.index, y=ask_off,
                 mode="lines", name="ask offset",
                 line=dict(width=1, dash="dot", color="red")), row=1, col=1)
             fig.add_trace(go.Scatter(
-                x=self.quotes.index, y=bid_off,
+                x=qt_ds.index, y=bid_off,
                 mode="lines", name="bid offset",
                 line=dict(width=1, dash="dot", color="lime")), row=1, col=1)
             fig.add_hline(y=0, line=dict(width=0.5, dash="dot", color="gray"), row=1, col=1)
 
         scale = 100.0 / self.capital
         fig.add_trace(go.Scatter(
-            x=self.pnl.index, y=self.pnl.values * scale,
+            x=pnl_ds.index, y=pnl_ds.values * scale,
             mode="lines", name="total PnL",
             line=dict(color="cyan", width=2)), row=2, col=1)
         if len(spread_pnl):
@@ -195,7 +205,7 @@ class BacktestResult:
         fig.update_yaxes(title_text="% of capital", row=2, col=1)
 
         fig.add_trace(go.Scatter(
-            x=self.inventory.index, y=self.inventory.values,
+            x=inv_ds.index, y=inv_ds.values,
             mode="lines", name="inventory",
             line=dict(color="orange")), row=3, col=1)
         fig.add_hline(y=0, line=dict(width=0.5, dash="dot", color="gray"), row=3, col=1)
