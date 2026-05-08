@@ -6,3 +6,5 @@ CLAUDE.md
 .claude
 **/*.so
 results/
+**/*compile_commands.json
+.cache
